@@ -39,6 +39,6 @@ all-features = true
 rustdoc-args = ["--cfg", "docsrs"]
 
 [dev-dependencies]
-log = "0.4.22"
+log = "0.4.26"
 bump2version = "0.1.4"
 web-sys = "0.3.76"
