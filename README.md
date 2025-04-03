@@ -35,18 +35,14 @@ i18nrs is a lightweight and powerful internationalization library for Wasm-based
 
 The following features make i18nrs a must-have for your Wasm-based projects:
 
-1. **🌐 Multi-Language Support**: Effortlessly support multiple languages in your application with a flexible configuration system.
-1. **📦 Easy Integration**: Simple setup and integration with Wasm frameworks like Yew, Dioxus, and Leptos.
-1. **🔄 Dynamic Language Switching**: Change languages on the fly and persist the selection using `LocalStorage` or `SessionStorage`.
-1. **⚙️ JSON-Based Translations**: Load translations from JSON files with full validation.
-1. **🗝️ Nested Key Translation**: Use nested keys like `menu.file.open` for organized and structured translations.
+- **🌐 Multi-Language Support**: Easily integrate and manage multiple languages with flexible configurations.
+- **🔄 Dynamic Language Switching**: Switch languages on the fly and persist the choice using `LocalStorage` or `SessionStorage`.
+- **📦 Simple Integration**: Works seamlessly with Wasm frameworks like Yew, Dioxus, and Leptos.
+- **⚙️ JSON-Based Translations**: Load and validate translations directly from JSON files.
+- **🗝️ Nested Key Translation**: Organize translations with nested keys like `menu.file.open`.
+- **🧭 Auto RTL/LTR Switching**: Automatically adjusts text direction based on the selected language, supporting Right-to-Left (RTL) languages such as Arabic and Hebrew.
 
-## 🛠️ Features
-
-- **Configuration Management**: Centralized configuration for languages and translation data.
-- **Browser Storage Support**: Store and retrieve the selected language using `LocalStorage` or `SessionStorage`.
-- **Fallback System**: Automatically falls back to the default language if a key is missing.
-- **Advanced Key Resolution**: Supports dot-separated keys for nested translations (e.g., `settings.profile.name`).
+This crate also includes a robust fallback system, supports nested key translation, and manages configuration centrally for efficient language handling.
 
 ## 📚 Yew Usage
 

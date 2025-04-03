@@ -2,12 +2,9 @@ use gloo_storage::{LocalStorage, SessionStorage, Storage};
 use serde_json::{self, Value};
 use std::collections::HashMap;
 
-/// Configuration for the I18n module, specifying supported languages and translations.
+/// Configuration for the I18n module, specifying supported translations.
 #[derive(Debug, Clone, PartialEq)]
 pub struct I18nConfig {
-    /// List of supported languages in the application.
-    /// Example: `vec!["en", "fr", "es"]`.
-    pub languages: Vec<&'static str>,
     /// Mapping of language codes to raw JSON strings representing translation data.
     /// Example: `HashMap::from([("en", "{...}"), ("fr", "{...}")])`.
     pub translations: HashMap<&'static str, &'static str>,
@@ -26,7 +23,7 @@ pub enum StorageType {
 /// This struct represents the state and methods for managing internationalization.
 #[derive(Clone, PartialEq)]
 pub struct I18n {
-    /// Configuration for I18n, specifying supported languages and translations.
+    /// Configuration for I18n, specifying supported translations.
     pub config: I18nConfig,
     /// The current language code being used for translations.
     current_language: String,
@@ -39,17 +36,21 @@ impl I18n {
     /// Initializes an `I18n` instance with a configuration and translations.
     ///
     /// # Arguments
-    /// - `config`: The `I18nConfig` containing supported languages and the translations map.
+    /// - `config`: The `I18nConfig` containing supported translations map.
     /// - `translations`: A `HashMap` containing language codes as keys and JSON strings as values.
     ///
     /// # Returns
     /// - `Ok(I18n)` if initialization is successful.
     /// - `Err(String)` if there is an error, such as missing translations or invalid JSON.
     pub fn new(config: I18nConfig, translations: HashMap<&str, &str>) -> Result<Self, String> {
-        let translations = Self::load_translations(&config.languages, translations)?;
+        let translations = Self::load_translations(translations)?;
 
-        let current_language = config
-            .languages
+        let languages: Vec<&str> = translations
+            .keys()
+            .map(|arg: &String| String::as_str(arg))
+            .collect();
+
+        let current_language = languages
             .first()
             .cloned()
             .ok_or_else(|| "You must add at least one supported language".to_string())?;
@@ -64,19 +65,18 @@ impl I18n {
     /// Loads translations for the given languages from a `HashMap` of raw JSON strings.
     ///
     /// # Arguments
-    /// - `languages`: A list of language codes (e.g., `["en", "fr"]`).
     /// - `translations`: A `HashMap` containing language codes as keys and JSON strings as values.
     ///
     /// # Returns
     /// - `Ok(HashMap<String, Value>)` if all translations are valid.
     /// - `Err(String)` if any translation is missing or invalid.
     fn load_translations(
-        languages: &[&str],
         translations: HashMap<&str, &str>,
     ) -> Result<HashMap<String, Value>, String> {
         let mut loaded_translations = HashMap::new();
+        let languages: Vec<&str> = translations.keys().copied().collect();
 
-        for &language in languages {
+        for language in &languages {
             if let Some(json_str) = translations.get(language) {
                 let json: Value = serde_json::from_str(json_str)
                     .map_err(|err| format!("Invalid JSON for language {}: {}", language, err))?;
@@ -105,7 +105,12 @@ impl I18n {
         storage_type: &StorageType,
         storage_name: &str,
     ) -> Result<(), String> {
-        if self.config.languages.contains(&language) {
+        let languages: Vec<&str> = self
+            .translations
+            .keys()
+            .map(|arg: &String| String::as_str(arg))
+            .collect();
+        if languages.contains(&language) {
             self.current_language = language.to_string();
             match storage_type {
                 StorageType::LocalStorage => LocalStorage::set(storage_name, language)
@@ -137,13 +142,21 @@ impl I18n {
     /// - A fallback message if the key or translation does not exist.
     pub fn t(&self, key: &str) -> String {
         let keys: Vec<&str> = key.split('.').collect();
+        let languages: Vec<&str> = self
+            .config
+            .translations
+            .keys()
+            .copied()
+            .collect();
+
+        let first_language = languages[0];
 
         self.translations
             .get(&self.current_language)
             .and_then(|language_json| Self::get_nested_value(language_json, &keys))
             .or_else(|| {
                 self.translations
-                    .get(self.config.languages[0])
+                    .get(first_language)
                     .and_then(|default_json| Self::get_nested_value(default_json, &keys))
             })
             .map_or_else(
