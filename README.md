@@ -12,7 +12,7 @@
 [![Join our Discord](https://dcbadge.limes.pink/api/server/b5JbvHW5nv)](https://discord.gg/b5JbvHW5nv)
 
 <!-- absolute url for docs.rs cause assets is excluded from crate -->
-![logo](https://raw.githubusercontent.com/opensass/i18n-rs/refs/heads/main/assets/logo.webp)
+![logo](https://raw.githubusercontent.com/opensass/i18n-rs/refs/heads/main/assets/new-logo.webp)
 
 </div>
 
