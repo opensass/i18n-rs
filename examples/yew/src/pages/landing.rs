@@ -10,6 +10,7 @@ pub fn landing_page() -> Html {
         ("en", include_str!("../../i18n/en/base.json")),
         ("es", include_str!("../../i18n/es/base.json")),
         ("fr", include_str!("../../i18n/fr/base.json")),
+        ("ar", include_str!("../../i18n/ar/base.json")),
     ]);
 
     let onchange = Callback::from(|language: String| {
@@ -18,7 +19,6 @@ pub fn landing_page() -> Html {
 
     html! {
         <I18nProvider
-            languages={vec!["en", "es", "fr"]}
             translations={translations}
             storage_type={StorageType::LocalStorage}
             storage_name={"i18nrs".to_string()}

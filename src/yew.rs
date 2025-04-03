@@ -3,20 +3,15 @@
 use crate::config::{I18n, I18nConfig, StorageType};
 use gloo_storage::{LocalStorage, SessionStorage, Storage};
 use std::collections::HashMap;
+use web_sys::window;
 use yew::prelude::*;
 
 /// Properties for the `I18nProvider` component.
 ///
-/// This configuration struct allows you to specify supported languages, translation paths, storage options,
+/// This configuration struct allows you to specify supported translations, storage options,
 /// and callbacks for language change or error handling.
 #[derive(Debug, Clone, PartialEq, Properties, Default)]
 pub struct I18nProviderConfig {
-    /// List of supported languages.
-    ///
-    /// Defines the languages that the application supports for translations. Defaults to `["en", "fr"]` if not specified.
-    #[prop_or(vec!["en", "fr"])]
-    pub languages: Vec<&'static str>,
-
     /// The translations raw content.
     ///
     /// Specifies the mapping of language codes to file contents.
@@ -78,7 +73,6 @@ pub struct I18nProviderConfig {
 /// # Properties
 /// The component uses the `I18nProviderConfig` struct for its properties. Key properties include:
 ///
-/// - **languages**: A list of supported languages (`Vec<&'static str>`). Default: `["en", "fr"]`.
 /// - **translations**: A mapping of language codes to raw translation content (`HashMap<&'static str, &'static str>`). Default: empty.
 /// - **children**: The child components wrapped within the `I18nProvider` to access the i18n context (`Html`).
 /// - **storage_type**: The type of browser storage for the selected language (`StorageType`). Options:
@@ -112,7 +106,6 @@ pub struct I18nProviderConfig {
 ///
 ///     html! {
 ///         <I18nProvider
-///             languages={vec!["en", "fr"]}
 ///             translations={translations}
 ///         >
 ///             <ChildComponent />
@@ -148,7 +141,6 @@ pub struct I18nProviderConfig {
 ///
 ///     html! {
 ///         <I18nProvider
-///             languages={vec!["en", "fr"]}
 ///             translations={translations}
 ///             onchange={on_language_change}
 ///         >
@@ -181,7 +173,6 @@ pub struct I18nProviderConfig {
 ///
 ///     html! {
 ///         <I18nProvider
-///             languages={vec!["en", "fr"]}
 ///             translations={translations}
 ///             storage_type={StorageType::SessionStorage}
 ///             storage_name={"custom_i18n_key".to_string()}
@@ -222,9 +213,21 @@ pub fn i18n_provider(props: &I18nProviderConfig) -> Html {
             .unwrap_or_else(|| Some(props.default_language.clone())),
     };
 
+    let is_rtl_language =
+        |lang: &str| -> bool { matches!(lang, "ar" | "he" | "fa" | "ur" | "ps" | "ku" | "sd") };
+
+    let update_text_direction = move |lang: &str| {
+        if let Some(document) = window().and_then(|win| win.document()) {
+            let dir = if is_rtl_language(lang) { "rtl" } else { "ltr" };
+            if let Some(html_element) = document.document_element() {
+                html_element.set_attribute("dir", dir).unwrap();
+            }
+        }
+    };
+    update_text_direction(&initial_language.clone().unwrap_or("en".to_string()));
+
     let i18n = I18n::new(
         I18nConfig {
-            languages: props.languages.clone(),
             translations: props.translations.clone(),
         },
         props.translations.clone(),
@@ -256,6 +259,7 @@ pub fn i18n_provider(props: &I18nProviderConfig) -> Html {
         let ctx = ctx.clone();
         Callback::from(move |language: String| {
             let mut i18n = (*ctx).clone();
+            update_text_direction(&language);
             if i18n
                 .set_translation_language(&language, &storage_type, &storage_name)
                 .is_ok()

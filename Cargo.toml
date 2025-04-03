@@ -18,6 +18,7 @@ exclude = ["assets", "examples"]
 serde_json = "1.0.113"
 gloo-storage = "0.3.0"
 yew = { version = "0.21.0", default-features = false, optional = true }
+web-sys = "0.3.76"
 
 [features]
 yew = ["dep:yew"]
@@ -41,4 +42,3 @@ rustdoc-args = ["--cfg", "docsrs"]
 [dev-dependencies]
 log = "0.4.22"
 bump2version = "0.1.4"
-web-sys = "0.3.76"

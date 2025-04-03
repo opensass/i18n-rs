@@ -31,6 +31,7 @@ pub fn greeting_select() -> Html {
                 <option value="en">{ "🇺🇸 English" }</option>
                 <option value="fr">{ "🇫🇷 French" }</option>
                 <option value="es">{ "🇪🇸 Spanish" }</option>
+                <option value="ar">{ "🇸🇦 Arabic" }</option>
             </select>
             <h1 class="text-2xl font-semibold text-gray-700">{ i18n.t("greeting") }</h1>
         </>
@@ -269,6 +270,7 @@ pub fn greeting_select() -> Html {
                 <option value="en">{ "🇺🇸 English" }</option>
                 <option value="fr">{ "🇫🇷 French" }</option>
                 <option value="es">{ "🇪🇸 Spanish" }</option>
+                <option value="ar">{ "🇸🇦 Arabic" }</option>
             </select>
             <h1 class="text-2xl font-semibold text-gray-700">{ i18n.t("greeting") }</h1>
         </>
