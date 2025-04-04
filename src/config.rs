@@ -142,12 +142,7 @@ impl I18n {
     /// - A fallback message if the key or translation does not exist.
     pub fn t(&self, key: &str) -> String {
         let keys: Vec<&str> = key.split('.').collect();
-        let languages: Vec<&str> = self
-            .config
-            .translations
-            .keys()
-            .copied()
-            .collect();
+        let languages: Vec<&str> = self.config.translations.keys().copied().collect();
 
         let first_language = languages[0];
 

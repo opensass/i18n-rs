@@ -1,0 +1,29 @@
+{
+  "greeting": "Bonjour!",
+  "change_language": "Changer de langue",
+  "close": "Fermer",
+  "nav": {
+    "home": "Accueil",
+    "about": "À propos",
+    "contact": "Contact"
+  },
+  "search": {
+    "placeholder": "Rechercher..."
+  },
+  "form": {
+    "name": "Nom",
+    "name_placeholder": "Entrez votre nom",
+    "email": "E-mail",
+    "email_placeholder": "Entrez votre e-mail",
+    "submit": "Soumettre"
+  },
+  "theme": {
+    "dynamic": {
+      "title": "Thème dynamique basé sur la langue"
+    }
+  },
+  "tooltip": {
+    "button": "Survolez-moi!",
+    "text": "Ceci est une info-bulle."
+  }
+}

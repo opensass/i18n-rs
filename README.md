@@ -24,7 +24,7 @@
 | Framework | Live Demo |
 | --- | --- |
 | Yew | [![Netlify Status](https://api.netlify.com/api/v1/badges/b213132a-d8b6-494b-8a5f-7290682a1a95/deploy-status)](https://i18n-rs.netlify.app) |
-| Dioxus | TODO |
+| Dioxus | [![Netlify Status](https://api.netlify.com/api/v1/badges/b213132a-d8b6-494b-8a5f-7290682a1a95/deploy-status)](https://i18n-rs-dio.netlify.app) |
 | Leptos | TODO |
 
 ## 📜 Intro
@@ -49,7 +49,7 @@ This crate also includes a robust fallback system, supports nested key translati
 <!-- absolute url for docs.rs cause YEW.md is not included in crate -->
 Refer to [our guide](https://github.com/opensass/i18n-rs/blob/main/YEW.md) for integrating i18nrs with your Yew app.
 
-## 🧬 Dioxus Usage (TODO)
+## 🧬 Dioxus Usage
 
 <!-- absolute url for docs.rs cause DIOXUS.md is not included in crate -->
 Refer to [our guide](https://github.com/opensass/i18n-rs/blob/main/DIOXUS.md) for integrating i18nrs with your Dioxus app.
