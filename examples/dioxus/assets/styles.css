@@ -1,0 +1,35 @@
+@import url("https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+@tailwind variants;
+
+body {
+	color: #5e5c7f;
+	background-color: #303030;
+	font-family: "Rubik", sans-serif;
+	font-size: 16px;
+	line-height: 1.7;
+	overflow-x: hidden;
+}
+.tooltip-button {
+	position: relative;
+	padding: 1rem;
+}
+
+.tooltip-button .tooltip-text {
+	display: none;
+	background-color: #2d2d2d;
+	color: white;
+	font-size: 0.75rem;
+	padding: 0.5rem;
+	border-radius: 0.375rem;
+	left: 50%;
+	bottom: 3rem;
+	z-index: 10;
+}
+
+.tooltip-button:hover .tooltip-text {
+	display: block;
+}

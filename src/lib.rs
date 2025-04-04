@@ -5,6 +5,9 @@
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
 #![doc = include_str!("../README.md")]
 
+#[cfg(feature = "dio")]
+pub mod dioxus;
+
 #[cfg(feature = "yew")]
 pub mod yew;
 

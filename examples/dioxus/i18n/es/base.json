@@ -1,0 +1,29 @@
+{
+  "greeting": "¡Hola!",
+  "change_language": "Cambiar idioma",
+  "close": "Cerrar",
+  "nav": {
+    "home": "Inicio",
+    "about": "Acerca de",
+    "contact": "Contacto"
+  },
+  "search": {
+    "placeholder": "Buscar..."
+  },
+  "form": {
+    "name": "Nombre",
+    "name_placeholder": "Ingrese su nombre",
+    "email": "Correo electrónico",
+    "email_placeholder": "Ingrese su correo electrónico",
+    "submit": "Enviar"
+  },
+  "theme": {
+    "dynamic": {
+      "title": "Tema dinámico basado en el idioma"
+    }
+  },
+  "tooltip": {
+    "button": "¡Pasa el ratón sobre mí!",
+    "text": "Esto es un tooltip."
+  }
+}
