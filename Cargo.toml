@@ -1,6 +1,6 @@
 [package]
 name = "i18nrs"
-version = "0.1.3"
+version = "0.1.4"
 edition = "2021"
 rust-version = "1.85"
 description = "🌐 A highly customizable Internationalization (i18n) component for WASM frameworks like Yew, Dioxus, and Leptos."
