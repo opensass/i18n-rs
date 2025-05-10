@@ -1,0 +1,29 @@
+{
+  "greeting": "Hello!",
+  "change_language": "Change Language",
+  "close": "Close",
+  "nav": {
+    "home": "Home",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "search": {
+    "placeholder": "Search..."
+  },
+  "form": {
+    "name": "Name",
+    "name_placeholder": "Enter your name",
+    "email": "Email",
+    "email_placeholder": "Enter your email",
+    "submit": "Submit"
+  },
+  "theme": {
+    "dynamic": {
+      "title": "Dynamic Theme Based on Language"
+    }
+  },
+  "tooltip": {
+    "button": "Hover me!",
+    "text": "This is a tooltip."
+  }
+}
