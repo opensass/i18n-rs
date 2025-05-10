@@ -1,0 +1,29 @@
+{
+  "greeting": "مرحبا!",
+  "change_language": "تغيير اللغة",
+  "close": "إغلاق",
+  "nav": {
+    "home": "الرئيسية",
+    "about": "معلومات عنا",
+    "contact": "اتصل بنا"
+  },
+  "search": {
+    "placeholder": "ابحث..."
+  },
+  "form": {
+    "name": "الاسم",
+    "name_placeholder": "أدخل اسمك",
+    "email": "البريد الإلكتروني",
+    "email_placeholder": "أدخل بريدك الإلكتروني",
+    "submit": "إرسال"
+  },
+  "theme": {
+    "dynamic": {
+      "title": "سمة ديناميكية بناءً على اللغة"
+    }
+  },
+  "tooltip": {
+    "button": "مرر المؤشر!",
+    "text": "هذه أداة مساعدة."
+  }
+}

@@ -1,8 +1,8 @@
 #![doc = include_str!("../YEW.md")]
 
 use crate::config::{I18n, I18nConfig, StorageType};
-use gloo_storage::{LocalStorage, SessionStorage, Storage};
 use std::collections::HashMap;
+#[cfg(target_arch = "wasm32")]
 use web_sys::window;
 use yew::prelude::*;
 
@@ -69,19 +69,6 @@ pub struct I18nProviderConfig {
 /// A Yew component that provides internationalization (i18n) context to its child components.
 /// This component manages the supported languages, translations, storage for the selected language,
 /// and callbacks for language changes and error handling.
-///
-/// # Properties
-/// The component uses the `I18nProviderConfig` struct for its properties. Key properties include:
-///
-/// - **translations**: A mapping of language codes to raw translation content (`HashMap<&'static str, &'static str>`). Default: empty.
-/// - **children**: The child components wrapped within the `I18nProvider` to access the i18n context (`Html`).
-/// - **storage_type**: The type of browser storage for the selected language (`StorageType`). Options:
-///   - `StorageType::LocalStorage`: Uses the browser's local storage (default).
-///   - `StorageType::SessionStorage`: Uses the browser's session storage.
-/// - **storage_name**: The key for storing the selected language in the browser's storage (`String`). Default: `"i18nrs"`.
-/// - **default_language**: The fallback language if no language is found in storage (`String`). Default: `"en"`.
-/// - **onchange**: An optional callback triggered when the language changes (`Option<Callback<String>>`).
-/// - **onerror**: An optional callback triggered when an error occurs in the i18n process (`Option<Callback<String>>`).
 ///
 /// # Features
 /// - Provides i18n context with support for dynamic language switching.
@@ -204,27 +191,26 @@ pub struct I18nProviderConfig {
 /// - The `set_language` callback is available via context to dynamically change the selected language.
 #[function_component(I18nProvider)]
 pub fn i18n_provider(props: &I18nProviderConfig) -> Html {
-    let initial_language = match props.storage_type {
-        StorageType::LocalStorage => LocalStorage::get(&props.storage_name)
-            .ok()
-            .unwrap_or_else(|| Some(props.default_language.clone())),
-        StorageType::SessionStorage => SessionStorage::get(&props.storage_name)
-            .ok()
-            .unwrap_or_else(|| Some(props.default_language.clone())),
-    };
+    let initial_language = get_initial_language(&props.storage_type, &props.storage_name)
+        .unwrap_or_else(|| Some(props.default_language.clone()));
 
+    #[cfg(target_arch = "wasm32")]
     let is_rtl_language =
-        |lang: &str| -> bool { matches!(lang, "ar" | "he" | "fa" | "ur" | "ps" | "ku" | "sd") };
+        |lang: &str| matches!(lang, "ar" | "he" | "fa" | "ur" | "ps" | "ku" | "sd");
 
-    let update_text_direction = move |lang: &str| {
-        if let Some(document) = window().and_then(|win| win.document()) {
-            let dir = if is_rtl_language(lang) { "rtl" } else { "ltr" };
-            if let Some(html_element) = document.document_element() {
-                html_element.set_attribute("dir", dir).unwrap();
+    let update_text_direction = move |_lang: &str| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(document) = window().and_then(|win| win.document()) {
+                let dir = if is_rtl_language(_lang) { "rtl" } else { "ltr" };
+                if let Some(html_element) = document.document_element() {
+                    let _ = html_element.set_attribute("dir", dir);
+                }
             }
         }
     };
-    update_text_direction(&initial_language.clone().unwrap_or("en".to_string()));
+
+    update_text_direction(&initial_language.clone().unwrap_or_else(|| "en".to_string()));
 
     let i18n = I18n::new(
         I18nConfig {
@@ -233,15 +219,13 @@ pub fn i18n_provider(props: &I18nProviderConfig) -> Html {
         props.translations.clone(),
     )
     .map(|mut instance| {
-        instance
-            .set_translation_language(
-                &initial_language.unwrap_or_default(),
-                &props.storage_type,
-                &props.storage_name,
-            )
-            .unwrap_or_else(|err| {
-                props.onerror.emit(err);
-            });
+        if let Err(err) = instance.set_translation_language(
+            &initial_language.clone().unwrap_or_default(),
+            &props.storage_type,
+            &props.storage_name,
+        ) {
+            props.onerror.emit(err);
+        }
         instance
     })
     .unwrap_or_else(|err| {
@@ -260,12 +244,12 @@ pub fn i18n_provider(props: &I18nProviderConfig) -> Html {
         Callback::from(move |language: String| {
             let mut i18n = (*ctx).clone();
             update_text_direction(&language);
+
             if i18n
                 .set_translation_language(&language, &storage_type, &storage_name)
                 .is_ok()
             {
                 ctx.set(i18n);
-
                 onchange.emit(language);
             }
         })
@@ -285,4 +269,30 @@ pub fn use_translation() -> (I18n, Callback<String>) {
     let i18n = use_context::<I18n>().expect("No I18n context provided");
     let set_language = use_context::<Callback<String>>().expect("No set_language context found");
     (i18n, set_language)
+}
+
+fn get_initial_language(_storage_type: &StorageType, _key: &str) -> Option<Option<String>> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        let value: Option<String> = match _storage_type {
+            StorageType::LocalStorage => window()
+                .expect("No window object")
+                .local_storage()
+                .expect("Failed to access localStorage")
+                .and_then(|s| s.get_item(_key).ok())
+                .expect("Stored language not found in localStorage"),
+            StorageType::SessionStorage => window()
+                .expect("No window object")
+                .session_storage()
+                .expect("Failed to access sessionStorage")
+                .and_then(|s| s.get_item(_key).ok())
+                .expect("Stored language not found in sessionStorage"),
+        };
+        Some(value)
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        Some(None)
+    }
 }

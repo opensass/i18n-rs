@@ -1,6 +1,7 @@
-use gloo_storage::{LocalStorage, SessionStorage, Storage};
 use serde_json::{self, Value};
 use std::collections::HashMap;
+#[cfg(target_arch = "wasm32")]
+use web_sys::window;
 
 /// Configuration for the I18n module, specifying supported translations.
 #[derive(Debug, Clone, PartialEq)]
@@ -102,26 +103,55 @@ impl I18n {
     pub fn set_translation_language(
         &mut self,
         language: &str,
-        storage_type: &StorageType,
-        storage_name: &str,
+        _storage_type: &StorageType,
+        _storage_name: &str,
     ) -> Result<(), String> {
         let languages: Vec<&str> = self
             .translations
             .keys()
-            .map(|arg: &String| String::as_str(arg))
+            .map(|arg: &String| arg.as_str())
             .collect();
-        if languages.contains(&language) {
-            self.current_language = language.to_string();
-            match storage_type {
-                StorageType::LocalStorage => LocalStorage::set(storage_name, language)
-                    .map_err(|_| "Failed to write to LocalStorage".to_string())?,
-                StorageType::SessionStorage => SessionStorage::set(storage_name, language)
-                    .map_err(|_| "Failed to write to SessionStorage".to_string())?,
-            }
-            Ok(())
-        } else {
-            Err(format!("Language '{}' is not supported", language))
+
+        if !languages.contains(&language) {
+            return Err(format!("Language '{}' is not supported", language));
         }
+
+        self.current_language = language.to_string();
+
+        #[cfg(target_arch = "wasm32")]
+        {
+            let result = match _storage_type {
+                StorageType::LocalStorage => window()
+                    .ok_or("No window available")?
+                    .local_storage()
+                    .map_err(|_| "Failed to access localStorage".to_string())?
+                    .ok_or("localStorage not available")?
+                    .set_item(_storage_name, language),
+                StorageType::SessionStorage => window()
+                    .ok_or("No window available")?
+                    .session_storage()
+                    .map_err(|_| "Failed to access sessionStorage".to_string())?
+                    .ok_or("sessionStorage not available")?
+                    .set_item(_storage_name, language),
+            };
+
+            result.map_err(|_| {
+                format!(
+                    "Failed to write to {}",
+                    match _storage_type {
+                        StorageType::LocalStorage => "LocalStorage",
+                        StorageType::SessionStorage => "SessionStorage",
+                    }
+                )
+            })?;
+        }
+
+        #[cfg(not(target_arch = "wasm32"))]
+        {
+            // TODO: Add support for native
+        }
+
+        Ok(())
     }
 
     /// Retrieves the current language code.

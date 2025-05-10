@@ -2,9 +2,9 @@
 
 use crate::config::{I18n, I18nConfig, StorageType};
 use dioxus::prelude::*;
-use gloo_storage::{LocalStorage, SessionStorage, Storage};
 use std::collections::HashMap;
-use web_sys::window;
+#[cfg(target_arch = "wasm32")]
+use web_sys::{window, Storage};
 
 /// Properties for the `I18nProvider` component.
 ///
@@ -82,19 +82,6 @@ pub struct I18nContext {
 /// reactive access to the current language and i18n instance. It also handles text direction (RTL/LTR)
 /// updates based on the selected language.
 ///
-/// # Properties
-/// The component accepts an `I18nProviderProps` struct with the following fields:
-///
-/// - **translations**: A map of language codes to raw translation content (`HashMap<&'static str, &'static str>`).
-///   Used to initialize the i18n system. Defaults to an empty map.
-/// - **children**: The nested elements that will have access to the i18n context (`Element`).
-/// - **storage_type**: Specifies whether to use `LocalStorage` or `SessionStorage` for saving the selected language.
-///   Defaults to `LocalStorage`.
-/// - **storage_name**: The key used in browser storage to persist the selected language. Default: `"i18nrs"`.
-/// - **default_language**: The fallback language if none is found in storage. Default: `"en"`.
-/// - **onchange**: Callback invoked when the language changes. Receives the new language code as a `String`.
-/// - **onerror**: Callback invoked when an error occurs (e.g., failed initialization or language switch).
-///
 /// # Features
 /// - Loads and provides translations via a context.
 /// - Dynamically updates the `dir` attribute of the HTML document based on RTL/LTR languages.
@@ -148,24 +135,22 @@ pub struct I18nContext {
 /// - The `I18nContext` with `i18n` and `set_language` is made available via Dioxus's context API.
 #[component]
 pub fn I18nProvider(props: I18nProviderProps) -> Element {
-    let initial_language = match props.storage_type {
-        StorageType::LocalStorage => LocalStorage::get(&props.storage_name)
-            .ok()
-            .unwrap_or(Some(props.default_language.clone())),
-        StorageType::SessionStorage => SessionStorage::get(&props.storage_name)
-            .ok()
-            .unwrap_or(Some(props.default_language.clone())),
-    };
+    let initial_language = get_initial_language(&props.storage_type, &props.storage_name)
+        .unwrap_or(Some(props.default_language.clone()));
 
+    #[cfg(target_arch = "wasm32")]
     fn is_rtl_language(lang: &str) -> bool {
         matches!(lang, "ar" | "he" | "fa" | "ur" | "ps" | "ku" | "sd")
     }
 
-    let update_text_direction = |lang: &str| {
-        if let Some(document) = window().and_then(|win| win.document()) {
-            let dir = if is_rtl_language(lang) { "rtl" } else { "ltr" };
-            if let Some(html_element) = document.document_element() {
-                let _ = html_element.set_attribute("dir", dir);
+    let update_text_direction = |_lang: &str| {
+        #[cfg(target_arch = "wasm32")]
+        {
+            if let Some(document) = window().and_then(|win| win.document()) {
+                let dir = if is_rtl_language(_lang) { "rtl" } else { "ltr" };
+                if let Some(html_element) = document.document_element() {
+                    let _ = html_element.set_attribute("dir", dir);
+                }
             }
         }
     };
@@ -209,12 +194,39 @@ pub fn I18nProvider(props: I18nProviderProps) -> Element {
             }
         }
     });
-    let context = I18nContext {
-        i18n,
-        set_language,
-    };
 
-    use_context_provider(|| context);
+    let context = I18nContext { i18n, set_language };
+    provide_context(context);
 
     rsx! { {props.children} }
+}
+
+pub fn use_i18n() -> I18nContext {
+    consume_context::<I18nContext>()
+}
+
+fn get_initial_language(_storage_type: &StorageType, _key: &str) -> Option<Option<String>> {
+    #[cfg(target_arch = "wasm32")]
+    {
+        let value: Option<String> = match _storage_type {
+            StorageType::LocalStorage => window()
+                .expect("No window object")
+                .local_storage()
+                .expect("Failed to access localStorage")
+                .and_then(|s| s.get_item(_key).ok())
+                .expect("Stored language not found in localStorage"),
+            StorageType::SessionStorage => window()
+                .expect("No window object")
+                .session_storage()
+                .expect("Failed to access sessionStorage")
+                .and_then(|s| s.get_item(_key).ok())
+                .expect("Stored language not found in sessionStorage"),
+        };
+        Some(value)
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        Some(None)
+    }
 }
