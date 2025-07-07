@@ -2116,14 +2116,15 @@ version = "0.1.0"
 dependencies = [
  "dioxus",
  "dioxus-logger",
- "i18nrs 0.1.5",
+ "i18nrs 0.1.6",
 ]
 
 [[package]]
 name = "i18nrs"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "dioxus",
+ "http",
  "serde_json",
  "web-sys",
 ]

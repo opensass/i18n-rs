@@ -4,7 +4,7 @@ use crate::config::{I18n, I18nConfig, StorageType};
 use dioxus::prelude::*;
 use std::collections::HashMap;
 #[cfg(target_arch = "wasm32")]
-use web_sys::{window, Storage};
+use web_sys::{wasm_bindgen::JsCast, window, Storage};
 
 /// Properties for the `I18nProvider` component.
 ///
@@ -135,8 +135,9 @@ pub struct I18nContext {
 /// - The `I18nContext` with `i18n` and `set_language` is made available via Dioxus's context API.
 #[component]
 pub fn I18nProvider(props: I18nProviderProps) -> Element {
-    let initial_language = get_initial_language(&props.storage_type, &props.storage_name)
-        .unwrap_or(Some(props.default_language.clone()));
+    let initial_language =
+        use_initial_language(props.storage_type.clone(), props.storage_name.clone())()
+            .unwrap_or(props.default_language.clone());
 
     #[cfg(target_arch = "wasm32")]
     fn is_rtl_language(lang: &str) -> bool {
@@ -155,7 +156,7 @@ pub fn I18nProvider(props: I18nProviderProps) -> Element {
         }
     };
 
-    update_text_direction(&initial_language.clone().unwrap_or_else(|| "en".to_string()));
+    update_text_direction(&initial_language.clone());
 
     let mut i18n = use_signal(|| {
         I18n::new(
@@ -166,7 +167,7 @@ pub fn I18nProvider(props: I18nProviderProps) -> Element {
         )
         .map(|mut instance| {
             if let Err(err) = instance.set_translation_language(
-                &initial_language.clone().unwrap_or_default(),
+                &initial_language.clone(),
                 &props.storage_type,
                 &props.storage_name,
             ) {
@@ -185,12 +186,20 @@ pub fn I18nProvider(props: I18nProviderProps) -> Element {
             let mut i18n_val = i18n();
             update_text_direction(&language);
 
+            let lang = language.clone();
             if i18n_val
                 .set_translation_language(&language, &props.storage_type, &props.storage_name)
                 .is_ok()
             {
                 i18n.set(i18n_val);
                 props.onchange.call(language);
+                let storage_name = props.storage_name.clone();
+
+                #[cfg(feature = "dio-ssr")]
+                spawn(async move {
+                    let lang = lang.clone();
+                    let _ = set_cookie(storage_name, lang).await;
+                });
             }
         }
     });
@@ -205,28 +214,131 @@ pub fn use_i18n() -> I18nContext {
     consume_context::<I18nContext>()
 }
 
-fn get_initial_language(_storage_type: &StorageType, _key: &str) -> Option<Option<String>> {
+#[allow(unused)]
+pub fn use_initial_language(storage_type: StorageType, key: String) -> Signal<Option<String>> {
+    let mut language = use_signal(|| None);
+
     #[cfg(target_arch = "wasm32")]
     {
-        let value: Option<String> = match _storage_type {
+        let stored: Option<String> = match storage_type {
             StorageType::LocalStorage => window()
                 .expect("No window object")
                 .local_storage()
                 .expect("Failed to access localStorage")
-                .and_then(|s| s.get_item(_key).ok())
+                .and_then(|s| s.get_item(&key).ok())
                 .expect("Stored language not found in localStorage"),
             StorageType::SessionStorage => window()
                 .expect("No window object")
                 .session_storage()
                 .expect("Failed to access sessionStorage")
-                .and_then(|s| s.get_item(_key).ok())
+                .and_then(|s| s.get_item(&key).ok())
                 .expect("Stored language not found in sessionStorage"),
         };
-        Some(value)
+        language.set(stored);
+
+        // TODO: Why no cookie?
+        #[cfg(feature = "dio-ssr")]
+        let cookie = web_sys::window()
+            .and_then(|w| w.document())
+            .and_then(|d| d.dyn_into::<web_sys::HtmlDocument>().ok())
+            .and_then(|html_doc| html_doc.cookie().ok())
+            .and_then(|c| {
+                c.split(';')
+                    .map(|c| c.trim())
+                    .find_map(|c| c.strip_prefix(&format!("{key}=")))
+                    .map(|v| v.to_owned())
+            });
+
+        #[cfg(feature = "dio-ssr")]
+        language.set(cookie);
+
+        #[cfg(feature = "dio-ssr")]
+        spawn(async move {
+            let key = key.clone();
+            let _cookie = get_cookie(key).await.unwrap();
+            // language.set(Some(cookie));
+        });
     }
 
     #[cfg(not(target_arch = "wasm32"))]
+    #[cfg(feature = "dio-ssr")]
     {
-        Some(None)
+        server_only! {
+            use_future({
+                use http::header::{COOKIE, SET_COOKIE};
+
+                let key = key.to_owned();
+                move || {let value = key.clone();
+                    async move {
+                        let ctx = server_context();
+
+                        let headers: http::HeaderMap = ctx.extract().await.unwrap();
+
+                        if let Some(raw) = headers.get(COOKIE).and_then(|v| v.to_str().ok()) {
+                            if let Some(v) = raw.split(';')
+                                                .map(|c| c.trim())
+                                                .find_map(|c| c.strip_prefix(&format!("{value}=")))
+                            {
+                                language.set(Some(v.to_string()));
+                                return;
+                            }
+                        }
+
+                        if let Some(al) = headers.get("Accept-Language")
+                                                .and_then(|v| v.to_str().ok()) {
+                            let v = al.split(',').next().unwrap_or("en").trim().to_owned();
+                            language.set(Some(v.clone()));
+
+                            ctx.response_parts_mut().headers.append(
+                                SET_COOKIE,
+                                http::HeaderValue::from_str(
+                                    &format!("{value}={v}; Path=/; Max-Age=31536000; SameSite=Lax"))
+                                .unwrap()
+                            );
+                        }
+                    }
+                }
+            });
+        }
     }
+
+    language
+}
+
+#[cfg(feature = "dio-ssr")]
+#[server]
+pub async fn set_cookie(key: String, lang: String) -> Result<(), ServerFnError> {
+    use http::header::SET_COOKIE;
+
+    let ctx = server_context();
+    ctx.response_parts_mut().headers.append(
+        SET_COOKIE,
+        http::HeaderValue::from_str(&format!(
+            "{key}={lang}; Path=/; SameSite=Lax; Max-Age=31536000"
+        ))?,
+    );
+
+    Ok(())
+}
+
+#[cfg(feature = "dio-ssr")]
+#[server]
+pub async fn get_cookie(key: String) -> Result<String, ServerFnError> {
+    use http::header::COOKIE;
+
+    let ctx = server_context();
+
+    let headers: http::HeaderMap = ctx.extract().await.unwrap();
+
+    if let Some(raw) = headers.get(COOKIE).and_then(|v| v.to_str().ok()) {
+        if let Some(v) = raw
+            .split(';')
+            .map(|c| c.trim())
+            .find_map(|c| c.strip_prefix(&format!("{key}=")))
+        {
+            return Ok(v.to_string());
+        }
+    }
+
+    Ok("en".to_string())
 }

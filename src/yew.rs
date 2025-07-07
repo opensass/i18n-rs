@@ -293,6 +293,6 @@ fn get_initial_language(_storage_type: &StorageType, _key: &str) -> Option<Optio
 
     #[cfg(not(target_arch = "wasm32"))]
     {
-        Some(None)
+        Some(Some("en".to_string()))
     }
 }

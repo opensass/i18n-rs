@@ -64,6 +64,7 @@ fn GreetingSelect() -> Element {{
     rsx! {{
         select {{
             class: "w-full border rounded-md p-2 mb-4",
+            value: {{language_state()}},
             onchange: move |event| {{
                 let value = event.value();
                 language_state.set(value.clone());
@@ -321,6 +322,7 @@ fn GreetingSelect() -> Element {
     rsx! {
         select {
             class: "w-full border rounded-md p-2 mb-4",
+            value: {language_state()},
             onchange: move |event| {
                 let value = event.value();
                 language_state.set(value.clone());

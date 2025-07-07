@@ -9,7 +9,7 @@ edition = "2021"
 [dependencies]
 dioxus = { version = "0.6.0", features = ["router", "fullstack"] }
 dioxus-logger = "0.6.2"
-i18nrs = { path = "../../", features = ["dio"] }
+i18nrs = { path = "../../", features = ["dio", "dio-ssr"] }
 
 [features]
 default = ["web"]
