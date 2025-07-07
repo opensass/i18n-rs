@@ -834,7 +834,7 @@ dependencies = [
 
 [[package]]
 name = "i18nrs"
-version = "0.1.5"
+version = "0.1.6"
 dependencies = [
  "dioxus",
  "serde_json",

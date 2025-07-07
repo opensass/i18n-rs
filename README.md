@@ -36,7 +36,7 @@ i18nrs is a lightweight and powerful internationalization library for Wasm-based
 The following features make i18nrs a must-have for your Wasm-based projects:
 
 - **🌐 Multi-Language Support**: Easily integrate and manage multiple languages with flexible configurations.
-- **🔄 Dynamic Language Switching**: Switch languages on the fly and persist the choice using `LocalStorage` or `SessionStorage`.
+- **🔄 Dynamic Language Switching**: Switch languages on the fly and persist the choice using `LocalStorage`, `SessionStorage`, or cookies in SSR mode.
 - **📦 Simple Integration**: Works seamlessly with Wasm frameworks like Yew, Dioxus, and Leptos.
 - **⚙️ JSON-Based Translations**: Load and validate translations directly from JSON files.
 - **🗝️ Nested Key Translation**: Organize translations with nested keys like `menu.file.open`.
