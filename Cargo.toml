@@ -1,8 +1,8 @@
 [package]
 name = "i18nrs"
 version = "0.1.7"
-edition = "2021"
-rust-version = "1.85"
+edition = "2024"
+rust-version = "1.89"
 description = "🌐 A highly customizable Internationalization (i18n) component for WASM frameworks like Yew, Dioxus, and Leptos."
 license = "MIT"
 keywords = ["i18n", "yew", "rust", "dioxus", "leptos"]
@@ -17,7 +17,7 @@ exclude = ["assets", "examples"]
 [dependencies]
 serde_json = "1.0.149"
 yew = { version = "0.22.0", default-features = false, optional = true }
-dioxus = { version = "0.6.3", optional = true }
+dioxus = { version = "0.7.3", optional = true }
 web-sys = { version = "0.3.77", features = [
     "Storage", "HtmlDocument"
 ]}
@@ -27,6 +27,7 @@ http = { version = "1.4.0", optional = true }
 yew = ["dep:yew"]
 dio = ["dioxus"]
 dio-ssr = ["dioxus/fullstack", "http"]
+server = ["dioxus/server"]
 
 [profile.release]
 opt-level = "z"

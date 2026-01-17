@@ -1,12 +1,12 @@
 [package]
 name = "i18n-rs-dioxus-example"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
-dioxus = { version = "0.6.3", features = ["web"] }
+dioxus = { version = "0.7.3", features = ["web"] }
 i18nrs = { path = "../../", features = ["dio"] }
-dioxus-logger = "0.6.2"
+dioxus-logger = "0.7.3"
 
 [profile]
 
