@@ -2953,7 +2953,7 @@ dependencies = [
 
 [[package]]
 name = "i18nrs"
-version = "0.1.7"
+version = "0.1.8"
 dependencies = [
  "bump2version",
  "dioxus",
