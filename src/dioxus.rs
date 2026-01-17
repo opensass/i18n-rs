@@ -4,7 +4,7 @@ use crate::config::{I18n, I18nConfig, StorageType};
 use dioxus::prelude::*;
 use std::collections::HashMap;
 #[cfg(target_arch = "wasm32")]
-use web_sys::{wasm_bindgen::JsCast, window, Storage};
+use web_sys::{Storage, wasm_bindgen::JsCast, window};
 
 /// Properties for the `I18nProvider` component.
 ///
@@ -265,36 +265,48 @@ pub fn use_initial_language(storage_type: StorageType, key: String) -> Signal<Op
     {
         server_only! {
             use_future({
+                use crate::dioxus::dioxus_fullstack::FullstackContext;
                 use http::header::{COOKIE, SET_COOKIE};
+                use http::HeaderValue;
 
                 let key = key.to_owned();
                 move || {let value = key.clone();
                     async move {
-                        let ctx = server_context();
+                        let value = value.clone();
 
-                        let headers: http::HeaderMap = ctx.extract().await.unwrap();
+                        let ctx_opt = FullstackContext::current();
+                        let ctx = match ctx_opt {
+                            Some(c) => c,
+                            None => return,
+                        };
 
-                        if let Some(raw) = headers.get(COOKIE).and_then(|v| v.to_str().ok()) {
-                            if let Some(v) = raw.split(';')
-                                                .map(|c| c.trim())
-                                                .find_map(|c| c.strip_prefix(&format!("{value}=")))
+                        let parts_guard = ctx.parts_mut();
+                        let headers = &parts_guard.headers;
+
+                        if let Some(raw) = headers
+                            .get(COOKIE)
+                            .and_then(|v: &http::HeaderValue| v.to_str().ok())
+                        && let Some(v) = raw
+                                .split(';')
+                                .map(|c: &str| c.trim())
+                                .find_map(|c: &str| c.strip_prefix(&format!("{value}=")))
                             {
                                 language.set(Some(v.to_string()));
                                 return;
                             }
-                        }
 
-                        if let Some(al) = headers.get("Accept-Language")
-                                                .and_then(|v| v.to_str().ok()) {
+                        if let Some(al) = headers
+                            .get("accept-language")
+                            .and_then(|v: &http::HeaderValue| v.to_str().ok())
+                        {
                             let v = al.split(',').next().unwrap_or("en").trim().to_owned();
                             language.set(Some(v.clone()));
 
-                            ctx.response_parts_mut().headers.append(
-                                SET_COOKIE,
-                                http::HeaderValue::from_str(
-                                    &format!("{value}={v}; Path=/; Max-Age=31536000; SameSite=Lax"))
-                                .unwrap()
-                            );
+                            if let Ok(cookie_val) = HeaderValue::from_str(
+                                &format!("{value}={v}; Path=/; Max-Age=31536000; SameSite=Lax")
+                            ) {
+                                ctx.add_response_header(SET_COOKIE, cookie_val);
+                            }
                         }
                     }
                 }
@@ -308,15 +320,26 @@ pub fn use_initial_language(storage_type: StorageType, key: String) -> Signal<Op
 #[cfg(feature = "dio-ssr")]
 #[server]
 pub async fn set_cookie(key: String, lang: String) -> Result<(), ServerFnError> {
+    use crate::dioxus::dioxus_fullstack::FullstackContext;
+    use http::HeaderValue;
     use http::header::SET_COOKIE;
 
-    let ctx = server_context();
-    ctx.response_parts_mut().headers.append(
-        SET_COOKIE,
-        http::HeaderValue::from_str(&format!(
-            "{key}={lang}; Path=/; SameSite=Lax; Max-Age=31536000"
-        ))?,
-    );
+    let ctx = FullstackContext::current().ok_or_else(|| ServerFnError::ServerError {
+        message: "FullstackContext not available".into(),
+        code: 500,
+        details: None,
+    })?;
+
+    let value = HeaderValue::from_str(&format!(
+        "{key}={lang}; Path=/; SameSite=Lax; Max-Age=31536000"
+    ))
+    .map_err(|e| ServerFnError::ServerError {
+        message: e.to_string(),
+        code: 500,
+        details: None,
+    })?;
+
+    ctx.add_response_header(SET_COOKIE, value);
 
     Ok(())
 }
@@ -324,20 +347,25 @@ pub async fn set_cookie(key: String, lang: String) -> Result<(), ServerFnError> 
 #[cfg(feature = "dio-ssr")]
 #[server]
 pub async fn get_cookie(key: String) -> Result<String, ServerFnError> {
+    use crate::dioxus::dioxus_fullstack::FullstackContext;
     use http::header::COOKIE;
 
-    let ctx = server_context();
+    let ctx = FullstackContext::current().ok_or_else(|| ServerFnError::ServerError {
+        message: "FullstackContext not available".into(),
+        code: 500,
+        details: None,
+    })?;
 
-    let headers: http::HeaderMap = ctx.extract().await.unwrap();
+    let parts_guard = ctx.parts_mut();
+    let headers = &parts_guard.headers;
 
-    if let Some(raw) = headers.get(COOKIE).and_then(|v| v.to_str().ok()) {
-        if let Some(v) = raw
+    if let Some(raw) = headers.get(COOKIE).and_then(|v| v.to_str().ok())
+        && let Some(v) = raw
             .split(';')
-            .map(|c| c.trim())
+            .map(str::trim)
             .find_map(|c| c.strip_prefix(&format!("{key}=")))
-        {
-            return Ok(v.to_string());
-        }
+    {
+        return Ok(v.to_string());
     }
 
     Ok("en".to_string())
