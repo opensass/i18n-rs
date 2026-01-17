@@ -79,3 +79,5 @@
    ```
 
 Navigate to http://localhost:3000 to explore all available components.
+
+This example is built with Yew 0.22.0 and yew-router 0.19.0.

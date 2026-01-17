@@ -1,5 +1,7 @@
 # Y i18nrs Yew Usage
 
+i18nrs' Yew integration targets Yew 0.22.0 and later.
+
 Adding **i18nrs** to your Yew project is simple:
 
 1. Make sure your project is set up with **Yew**. Follow their [Getting Started Guide](https://yew.rs/docs/getting-started/introduction) for setup instructions.
