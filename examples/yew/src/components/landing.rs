@@ -229,6 +229,7 @@ pub fn examples() -> Html {
     html! {
         <div class="m-6 min-h-screen flex flex-col items-center justify-center">
             <h1 class="text-3xl font-bold mb-8 text-white">{ "I18n RS Yew Examples" }</h1>
+            <a class="text-xl font-bold mb-8 text-white" href="http://localhost:8080/struct_components">{ "See also struct-component examples" }</a>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
                 // Basic Usage
                 <div class="flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-lg">
