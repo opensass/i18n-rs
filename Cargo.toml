@@ -17,7 +17,7 @@ exclude = ["assets", "examples"]
 [dependencies]
 serde_json = "1.0.149"
 yew = { version = "0.22.0", default-features = false, optional = true }
-dioxus = { version = "0.7.3", optional = true }
+dioxus = { version = "0.7.6", optional = true }
 web-sys = { version = "0.3.77", features = [
     "Storage", "HtmlDocument"
 ]}
