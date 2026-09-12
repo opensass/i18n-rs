@@ -1,6 +1,6 @@
 use crate::components::landing::Examples;
-use i18nrs::yew::I18nProvider;
 use i18nrs::StorageType;
+use i18nrs::yew::I18nProvider;
 use std::collections::HashMap;
 use yew::prelude::*;
 
