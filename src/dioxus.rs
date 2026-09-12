@@ -255,7 +255,7 @@ pub fn use_initial_language(storage_type: StorageType, key: String) -> Signal<Op
         #[cfg(feature = "dio-ssr")]
         spawn(async move {
             let key = key.clone();
-            let _cookie = get_cookie(key).await.unwrap();
+            let _cookie = get_cookie(key).await.unwrap_or_default();
             // language.set(Some(cookie));
         });
     }

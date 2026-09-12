@@ -25,10 +25,12 @@ fn app() -> Element {
 
     rsx! {
         document::Link { rel: "icon", href: FAVICON }
-        document::Link { rel: "stylesheet", href: MAIN_CSS }
+        document::Stylesheet { href: MAIN_CSS }
         document::Link { rel: "stylesheet", href: "https://unpkg.com/tailwindcss@2.2.19/dist/tailwind.min.css" }
         div {
-            class: "m-6 min-h-screen flex flex-col items-center justify-center",
+            class: "min-h-screen flex flex-col items-center justify-center",
+            style: "color: #5e5c7f; background-color: #303030; font-family: 'Rubik', sans-serif; overflow-x: hidden;",
+
             I18nProvider {
                 translations: translations.clone(),
                 default_language: "en".to_string(),

@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-dioxus = { version = "0.7.3", features = ["web"] }
+dioxus = { version = "0.7.10", features = ["web"] }
 i18nrs = { path = "../../", features = ["dio"] }
-dioxus-logger = "0.7.3"
+dioxus-logger = "0.7.10"
 
 [profile]
 
