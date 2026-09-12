@@ -132,7 +132,7 @@ Follow these steps to integrate i18nrs into your Yew component-based application
 
 Use a struct-component for the entry-point of the application. Configure some languages via `I18nProviderConfig` and use a `I18nProvider`:
 
-```rust
+```rust ,ignore
 use i18nrs::yew::use_translation;
 use i18nrs::yew::I18nProvider;
 use i18nrs::yew::I18nProviderConfig;
@@ -184,11 +184,11 @@ fn main() {
 
 Define a function-component to wrap your final struct-component. This is needed because you cannot call `use_translation` from a struct-component directly:
 
-```rust
-#[yew::function_component(FMainStructComponents)]
-pub fn f_main_struct_components() -> yew::Html {
+```rust ,ignore
+#[function_component(FMainStructComponents)]
+pub fn f_main_struct_components() -> Html {
     let (i18n, set_language) = use_translation();
-    yew::html! {<MainStructComponents i18n={i18n} set_language={set_language} />}
+    html! {<MainStructComponents i18n={i18n} set_language={set_language} />}
 }
 ```
 
@@ -196,7 +196,7 @@ pub fn f_main_struct_components() -> yew::Html {
 
 Define the final struct-component. Use `MainProps` to propagate the `i18n` and `set_language` properties from the function-component to the struct-component:
 
-```rust
+```rust ,ignore
 pub struct MainStructComponents {}
 
 pub struct MainMsg {}
@@ -234,6 +234,100 @@ impl Component for MainStructComponents {
             </div>
         }
     }
+}
+```
+
+The following is a complete example based on the previous steps:
+
+```rust
+use i18nrs::yew::use_translation;
+use i18nrs::yew::I18nProvider;
+use i18nrs::yew::I18nProviderConfig;
+use std::collections::HashMap;
+use web_sys::wasm_bindgen::JsCast;
+use web_sys::HtmlInputElement;
+use yew::prelude::*;
+
+pub struct StructComponents {}
+
+pub struct StructComponentsMsg {}
+#[derive(Properties, PartialEq, Default)]
+pub struct StructComponentsProps {}
+pub struct MainStructComponents {}
+
+pub struct MainMsg {}
+#[derive(Properties, PartialEq)]
+pub struct MainProps {
+    i18n: i18nrs::I18n,
+    set_language: Callback<String>,
+}
+
+impl Component for MainStructComponents {
+    type Message = MainMsg;
+    type Properties = MainProps;
+
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self {}
+    }
+
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let greeting = ctx.props().i18n.t("greeting"); // Retrieves translation for key "greeting"
+        let language = (&ctx.props().set_language).clone();
+        let callback = Callback::from(move |e: MouseEvent| {
+            let id = JsCast::unchecked_into::<HtmlInputElement>(e.target().unwrap()).id();
+            language.emit(id.to_string())
+        });
+
+        html! {
+            <div>
+                <h1>{ greeting }</h1>
+                <button id={"fr"} onclick={&callback}>
+                    { "Switch to French" }
+                </button>
+                <button id={"en"} onclick={&callback}>
+                    { "Switch to English" }
+                </button>
+            </div>
+        }
+    }
+}
+
+#[function_component(FMainStructComponents)]
+pub fn f_main_struct_components() -> Html {
+    let (i18n, set_language) = use_translation();
+    html! {<MainStructComponents i18n={i18n} set_language={set_language} />}
+}
+
+impl Component for StructComponents {
+    type Message = StructComponentsMsg;
+    type Properties = StructComponentsProps;
+
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self {}
+    }
+
+    fn view(&self, _ctx: &Context<Self>) -> Html {
+        let translations = HashMap::from([
+            ("en", r#"{"greeting": "Hello", "farewell": "Goodbye"}"#),
+            ("fr", r#"{"greeting": "Bonjour", "farewell": "Au revoir"}"#),
+        ]);
+
+        let config = I18nProviderConfig {
+            translations,
+            default_language: "en".to_string(),
+            ..Default::default()
+        };
+
+        html! {
+            <I18nProvider ..config>
+                <FMainStructComponents />
+            </I18nProvider>
+        }
+    }
+}
+
+fn main() {
+    // yew::Renderer::<StructComponents>::new().render();
 }
 ```
 

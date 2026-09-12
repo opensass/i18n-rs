@@ -1,4 +1,8 @@
 use i18nrs::yew::use_translation;
+use i18nrs::yew::I18nProvider;
+use i18nrs::yew::I18nProviderConfig;
+use std::collections::HashMap;
+use web_sys::wasm_bindgen::JsCast;
 use web_sys::HtmlInputElement;
 use yew::prelude::*;
 
@@ -224,18 +228,113 @@ pub fn tooltip_example() -> Html {
     }
 }
 
+pub struct MainStructComponents {}
+
+pub struct MainMsg {}
+
+#[derive(Properties, PartialEq)]
+pub struct MainProps {
+    pub i18n: i18nrs::I18n,
+    pub set_language: Callback<String>,
+}
+
+impl Component for MainStructComponents {
+    type Message = MainMsg;
+    type Properties = MainProps;
+
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self {}
+    }
+
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let greeting = ctx.props().i18n.t("greeting");
+        let language = (&ctx.props().set_language).clone();
+        let callback = Callback::from(move |e: MouseEvent| {
+            let id = JsCast::unchecked_into::<HtmlInputElement>(e.target().unwrap()).id();
+            language.emit(id.to_string())
+        });
+
+        html! {
+            <div class="flex flex-col items-center gap-3">
+                <h1 class="text-xl font-semibold text-gray-800">{ greeting }</h1>
+                <div class="flex gap-2">
+                    <button
+                        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                        id="us"
+                        onclick={&callback}
+                    >
+                        { "🇺🇸 US" }
+                    </button>
+                    <button
+                        class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                        id="fr"
+                        onclick={&callback}
+                    >
+                        { "🇫🇷 FR" }
+                    </button>
+                    <button
+                        class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                        id="es"
+                        onclick={&callback}
+                    >
+                        { "🇪🇸 ES" }
+                    </button>
+                </div>
+            </div>
+        }
+    }
+}
+
+#[function_component(FMainStructComponents)]
+pub fn f_main_struct_components() -> Html {
+    let (i18n, set_language) = use_translation();
+    html! { <MainStructComponents i18n={i18n} set_language={set_language} /> }
+}
+
+pub struct StructComponentsCard {}
+pub struct StructCardMsg {}
+
+#[derive(Properties, PartialEq, Default)]
+pub struct StructCardProps {}
+
+impl Component for StructComponentsCard {
+    type Message = StructCardMsg;
+    type Properties = StructCardProps;
+
+    fn create(_ctx: &Context<Self>) -> Self {
+        Self {}
+    }
+
+    fn view(&self, _ctx: &Context<Self>) -> Html {
+        let translations = HashMap::from([
+            ("us", "{\"greeting\": \"Hello\"}"),
+            ("fr", "{\"greeting\": \"Bonjour\"}"),
+            ("es", "{\"greeting\": \"Hola\"}"),
+        ]);
+
+        let config = I18nProviderConfig {
+            translations,
+            default_language: "us".to_string(),
+            ..Default::default()
+        };
+
+        html! {
+            <I18nProvider ..config>
+                <FMainStructComponents />
+            </I18nProvider>
+        }
+    }
+}
+
 #[function_component(Examples)]
 pub fn examples() -> Html {
     html! {
         <div class="m-6 min-h-screen flex flex-col items-center justify-center">
             <h1 class="text-3xl font-bold mb-8 text-white">{ "I18n RS Yew Examples" }</h1>
-            <a class="text-xl font-bold mb-8 text-white" href="http://localhost:8080/struct_components">{ "See also struct-component examples" }</a>
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
                 // Basic Usage
                 <div class="flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-lg">
-                    <h2 class="text-xl font-semibold mb-4 text-gray-800">
-                        { "Basic Usage" }
-                    </h2>
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">{ "Basic Usage" }</h2>
                     <pre
                         class="font-mono text-xs text-gray-200 bg-gray-800 p-4 rounded-md w-full mb-4 overflow-x-auto"
                     >
@@ -554,6 +653,63 @@ pub fn tooltip_example() -> Html {
 }"# }
                     </pre>
                     <TooltipExample />
+                </div>
+                // Struct-Based Component
+                <div class="flex flex-col items-center bg-gray-50 p-6 rounded-lg shadow-lg">
+                    <h2 class="text-xl font-semibold mb-4 text-gray-800">
+                        { "Struct-Based Component" }
+                    </h2>
+                    <pre
+                        class="font-mono text-xs text-gray-200 bg-gray-800 p-4 rounded-md w-full mb-4 overflow-x-auto"
+                    >
+                        { r#"use yew::prelude::*;
+use i18nrs::yew::{use_translation, I18nProvider, I18nProviderConfig};
+use std::collections::HashMap;
+use web_sys::{wasm_bindgen::JsCast, HtmlInputElement};
+
+// Bridge: function component hands i18n hooks into the struct component
+#[function_component(FMainStructComponents)]
+pub fn f_main_struct_components() -> Html {
+    let (i18n, set_language) = use_translation();
+    html! { <MainStructComponents i18n={i18n} set_language={set_language} /> }
+}
+
+pub struct MainStructComponents {}
+pub struct MainMsg {}
+
+#[derive(Properties, PartialEq)]
+pub struct MainProps {
+    i18n: i18nrs::I18n,
+    set_language: Callback<String>,
+}
+
+impl Component for MainStructComponents {
+    type Message = MainMsg;
+    type Properties = MainProps;
+
+    fn create(_ctx: &Context<Self>) -> Self { Self {} }
+
+    fn view(&self, ctx: &Context<Self>) -> Html {
+        let greeting = ctx.props().i18n.t("greeting");
+        let language = (&ctx.props().set_language).clone();
+        let callback = Callback::from(move |e: MouseEvent| {
+            let id = JsCast::unchecked_into::<HtmlInputElement>(
+                e.target().unwrap()
+            ).id();
+            language.emit(id.to_string())
+        });
+        html! {
+            <div>
+                <h1>{ greeting }</h1>
+                <button id={"us"} onclick={&callback}>{ "Switch to Us" }</button>
+                <button id={"fr"} onclick={&callback}>{ "Switch to Fr" }</button>
+                <button id={"es"} onclick={&callback}>{ "Switch to Es" }</button>
+            </div>
+        }
+    }
+}"# }
+                    </pre>
+                    <StructComponentsCard />
                 </div>
             </div>
         </div>
